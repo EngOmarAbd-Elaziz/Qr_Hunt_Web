@@ -1,17 +1,51 @@
 // src/lib/colors.ts
 
 export const WORD_COLORS = [
-  'var(--primary-color)', // Indigo
-  'var(--accent-color)',  // Rose
-  'var(--success-color)', // Emerald
-  '#0ea5e9', // Sky
-  '#a855f7', // Purple
-  '#f59e0b', // Amber
-  '#ec4899', // Pink
-  '#14b8a6', // Teal
-  '#8b5cf6', // Violet
-  '#f97316', // Orange
+  'var(--primary-color)', // 0. Indigo
+  'var(--accent-color)',  // 1. Rose
+  'var(--success-color)', // 2. Emerald
+  '#0ea5e9', // 3. Sky Blue
+  '#a855f7', // 4. Purple
+  '#f59e0b', // 5. Amber
+  '#ec4899', // 6. Pink
+  '#14b8a6', // 7. Teal
+  '#8b5cf6', // 8. Violet
+  '#f97316', // 9. Orange
+  '#ef4444', // 10. Red
+  '#84cc16', // 11. Lime
+  '#06b6d4', // 12. Cyan
+  '#3b82f6', // 13. Blue
+  '#6366f1', // 14. Indigo Light
+  '#d946ef', // 15. Fuchsia
+  '#f43f5e', // 16. Rose Dark
+  '#10b981', // 17. Emerald Dark
+  '#eab308', // 18. Yellow
+  '#059669', // 19. Green
 ];
+
+// Map of known word UUIDs to guarantee 100% distinct colors for the 20 initial words
+const KNOWN_WORDS: Record<string, number> = {
+  'a95c64c0-8891-4d68-8f6c-81518d500d4a': 0,  // GAME
+  '8ac80ead-6218-487d-bae4-169fa75a0ac3': 1,  // CODE
+  'f1a9de98-9a41-495b-b301-728cf18baf01': 2,  // FIRE
+  '4c08ea41-3023-4631-92cf-520e83cc7220': 3,  // STAR
+  '2662774c-79ac-430d-948f-8e16649e2fa4': 4,  // MOON
+  'be2f7c24-a12d-448c-b998-c63925b56dc9': 5,  // WAVE
+  '3d64498c-7e74-40ea-8390-89a2096a5d9b': 6,  // HOPE
+  'a710f1a8-954f-4e4b-80c6-f0376f236995': 7,  // DOOR
+  '8df8114e-463c-4767-9e65-7a64da17fd8d': 8,  // DREAM
+  '080e5049-c490-45a7-ba69-7c2c7ecb9470': 9,  // LIGHT
+  '9e80141a-e9db-4095-913c-ff4f78ad2bf1': 10, // SPACE
+  'fafcbf99-b827-44fd-afab-f73e0ac94071': 11, // MAGIC
+  'e12ec223-59e4-443c-83e1-39e8c5fe9a4a': 12, // QUEST
+  '22a0f069-1d6e-42a9-82af-8eb5317229bb': 13, // HEART
+  '3fc8ff2b-4ca7-4025-a085-4cc409710f21': 14, // WORLD
+  'cc814c03-7dd9-4dbf-95b4-35b700bda6d2': 15, // FLAME
+  '349228fc-1012-4def-8885-68a7951582c1': 16, // PUZZLE
+  'bca40eb7-73e8-4688-8508-2da9d8ea7440': 17, // SECRET
+  '3ff30e9b-ffb5-4948-944d-6fc5e5f6008d': 18, // FUTURE
+  'a07e8c7d-aee9-43f5-8539-90d4d51409e4': 19, // HIDDEN
+};
 
 /**
  * Returns a deterministic color string based on a UUID.
@@ -20,7 +54,12 @@ export const WORD_COLORS = [
 export function getColorForWord(wordId: string): string {
   if (!wordId) return 'rgba(255,255,255,0.2)'; // fallback
   
-  // Simple hash function for string
+  // Guarantee distinct colors for the default 20 words
+  if (wordId in KNOWN_WORDS) {
+    return WORD_COLORS[KNOWN_WORDS[wordId]];
+  }
+  
+  // Simple hash function fallback for dynamically added words
   let hash = 0;
   for (let i = 0; i < wordId.length; i++) {
     hash = wordId.charCodeAt(i) + ((hash << 5) - hash);
