@@ -77,6 +77,9 @@ npm run generate-qrs
    - `04_seed.sql` (generated in Step 2)
    - `05_auth_rpc.sql`
    - `06_fix_submit_word.sql`
+   - `07_fix_claim_fragment.sql`
+   - `08_words_view.sql`
+   - `09_performance_and_audit.sql`
 
 ### 4. Run Locally
 Copy `.env.example` to `.env` and add your keys:
