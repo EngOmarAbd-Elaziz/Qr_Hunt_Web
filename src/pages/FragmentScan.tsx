@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { playScanSuccess } from '../lib/sound';
+import { vibrateSuccess } from '../lib/haptics';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 export default function FragmentScan() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Claiming fragment...');
   const [fragmentData, setFragmentData] = useState<any>(null);
-
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -52,7 +55,13 @@ export default function FragmentScan() {
         alreadyOwned: data.already_owned
       });
 
-      // Auto redirect after 3 seconds
+      // Play sound + vibrate on new fragment only
+      if (!data.already_owned) {
+        playScanSuccess();
+        vibrateSuccess();
+      }
+
+      // Auto redirect after 3.5 seconds
       setTimeout(() => navigate('/'), 3500);
 
     } catch (err: any) {
@@ -66,6 +75,14 @@ export default function FragmentScan() {
 
   return (
     <div className="animate-slide-up" style={{ textAlign: 'center', marginTop: '15vh' }}>
+      {!isOnline && (
+        <div className="offline-banner">
+          📡 Connection Lost
+          <p>Please check your internet connection.</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
+
       {status === 'loading' && (
         <div className="glass-panel" style={{ padding: '40px' }}>
           <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔍</div>

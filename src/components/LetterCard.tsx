@@ -6,12 +6,13 @@ interface LetterCardProps {
   letter: string;
   word_id?: string;
   disabled?: boolean;
+  isDiscarding?: boolean;
 }
 
-export function LetterCard({ id, letter, word_id, disabled }: LetterCardProps) {
+export function LetterCard({ id, letter, word_id, disabled, isDiscarding }: LetterCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
-    disabled
+    disabled: disabled || isDiscarding
   });
 
   const wordColor = word_id ? getColorForWord(word_id) : 'rgba(255,255,255,0.2)';
@@ -20,8 +21,14 @@ export function LetterCard({ id, letter, word_id, disabled }: LetterCardProps) {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     borderColor: wordColor,
     boxShadow: isDragging ? `0 8px 24px ${wordColor}80` : `0 2px 10px ${wordColor}30`,
-    borderTop: `4px solid ${wordColor}`
+    borderTop: `4px solid ${wordColor}`,
   };
+
+  const className = [
+    'letter-card',
+    isDragging ? 'dragging' : '',
+    isDiscarding ? 'discarding' : '',
+  ].filter(Boolean).join(' ');
 
   return (
     <div
@@ -29,7 +36,7 @@ export function LetterCard({ id, letter, word_id, disabled }: LetterCardProps) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`letter-card ${isDragging ? 'dragging' : ''}`}
+      className={className}
       aria-disabled={disabled}
     >
       {letter}

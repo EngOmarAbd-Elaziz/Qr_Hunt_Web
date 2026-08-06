@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { DndContext, pointerWithin } from '@dnd-kit/core';
@@ -7,12 +7,17 @@ import { LetterCard } from '../components/LetterCard';
 import { WordSlot } from '../components/WordSlot';
 import { TrashArea } from '../components/TrashArea';
 import { ConfirmationModal } from '../components/ConfirmationModal';
-import { withCache } from '../lib/cache';
+import { withCache, invalidateCache } from '../lib/cache';
+import { playVictory, playError, playDiscard } from '../lib/sound';
+import { vibrateVictory, vibrateError } from '../lib/haptics';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const BOARD_LENGTHS = [4, 5, 6];
+const LEADERBOARD_POLL_MS = 5000;
 
 export default function GameDashboard() {
   const navigate = useNavigate();
+  const isOnline = useOnlineStatus();
   const [player, setPlayer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [fragments, setFragments] = useState<any[]>([]);
@@ -25,7 +30,53 @@ export default function GameDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [discardFragmentId, setDiscardFragmentId] = useState<string | null>(null);
+  // Track which fragment is playing the discard animation
+  const [discardingId, setDiscardingId] = useState<string | null>(null);
 
+  const leaderboardIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ─── Leaderboard: fetch + poll every 5s ───────────────────────────────────
+  const fetchLeaderboard = useCallback(async () => {
+    const solved = await withCache(
+      'leaderboard_count',
+      async () => {
+        const { count } = await supabase
+          .from('words')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'SOLVED');
+        return count || 0;
+      },
+      LEADERBOARD_POLL_MS
+    );
+    setDiscoveredCount(solved);
+  }, []);
+
+  const startLeaderboardPolling = useCallback(() => {
+    if (leaderboardIntervalRef.current) return; // already running
+    leaderboardIntervalRef.current = setInterval(() => {
+      invalidateCache('leaderboard_count');
+      fetchLeaderboard();
+    }, LEADERBOARD_POLL_MS);
+  }, [fetchLeaderboard]);
+
+  const stopLeaderboardPolling = useCallback(() => {
+    if (leaderboardIntervalRef.current) {
+      clearInterval(leaderboardIntervalRef.current);
+      leaderboardIntervalRef.current = null;
+    }
+  }, []);
+
+  // Pause/resume leaderboard polling based on connectivity
+  useEffect(() => {
+    if (isOnline && !loading) {
+      startLeaderboardPolling();
+    } else {
+      stopLeaderboardPolling();
+    }
+    return stopLeaderboardPolling;
+  }, [isOnline, loading, startLeaderboardPolling, stopLeaderboardPolling]);
+
+  // ─── Supabase Realtime + Init ──────────────────────────────────────────────
   useEffect(() => {
     let playerIdRef: string | null = null;
 
@@ -39,8 +90,6 @@ export default function GameDashboard() {
           const updatedWord = payload.new as any;
           if (updatedWord.status === 'SOLVED') {
             showToast('🏆 A HIDDEN WORD HAS BEEN DISCOVERED!');
-
-            // Increment discovered count
             setDiscoveredCount(prev => prev + 1);
 
             // Clear the board of matching length → letters return to collection
@@ -50,10 +99,7 @@ export default function GameDashboard() {
               let changed = false;
               for (let i = 0; i < len; i++) {
                 const key = `board-${len}-${i}`;
-                if (next[key]) {
-                  delete next[key];
-                  changed = true;
-                }
+                if (next[key]) { delete next[key]; changed = true; }
               }
               return changed ? next : prev;
             });
@@ -61,7 +107,7 @@ export default function GameDashboard() {
         })
         .subscribe();
 
-      // Subscribe to this player's new fragments (auto-refresh collection after scan)
+      // Subscribe to this player's new fragments
       const fragSub = supabase.channel(`player-frags-${playerIdRef}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -85,7 +131,7 @@ export default function GameDashboard() {
         })
         .subscribe();
 
-      // Subscribe to this player's status to catch WON state
+      // Subscribe to player status changes → WON redirect
       const playerSub = supabase.channel(`player-status-${playerIdRef}`)
         .on('postgres_changes', {
           event: 'UPDATE',
@@ -151,26 +197,17 @@ export default function GameDashboard() {
       })));
     }
 
-    // Fetch only the count of solved words — no word content exposed, with 30s cache
-    const solved = await withCache('leaderboard_count', async () => {
-      const { count } = await supabase
-        .from('words')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'SOLVED');
-      return count || 0;
-    }, 30000);
-
-    setDiscoveredCount(solved);
-
+    await fetchLeaderboard();
     setLoading(false);
     return session.user.id;
   };
 
+  // ─── Drag & Drop ───────────────────────────────────────────────────────────
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (!over) {
-      // Revert if dropped outside
+      // Dropped outside — revert from slot if it was placed
       setPlacements(prev => {
         const next = { ...prev };
         Object.keys(next).forEach(key => {
@@ -181,19 +218,18 @@ export default function GameDashboard() {
       return;
     }
 
-    const overId = over.id as string; // 'board-{len}-{i}' or 'trash'
+    const overId = over.id as string;
 
     if (overId === 'trash') {
       setDiscardFragmentId(active.id as string);
       setShowDiscardModal(true);
       return;
     }
-    const fragment = fragments.find(f => f.id === active.id);
 
+    const fragment = fragments.find(f => f.id === active.id);
     if (fragment) {
       setPlacements(prev => {
         const next = { ...prev };
-        // Remove from old slot
         Object.keys(next).forEach(key => {
           if (next[key]?.id === active.id) delete next[key];
         });
@@ -203,20 +239,29 @@ export default function GameDashboard() {
     }
   };
 
+  // ─── Discard ───────────────────────────────────────────────────────────────
   const confirmDiscard = async () => {
     if (!discardFragmentId) return;
     setIsProcessing(true);
-    
+
+    // 1. Trigger animation + sound simultaneously
+    const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    setDiscardingId(discardFragmentId);
+    playDiscard(); // sound fires at exactly the same time as animation
+
+    // 2. Wait for animation to finish (300ms) before committing
+    await new Promise(res => setTimeout(res, prefersReduced ? 0 : 310));
+
     try {
       const { data, error } = await supabase.rpc('discard_fragment', {
         p_fragment_id: discardFragmentId
       });
 
       if (error) throw error;
-      
+
       if (data.success) {
         showToast('🗑️ Fragment discarded.');
-        // Remove from placements if it was there
+        // Remove from placements if it was placed on a board slot
         setPlacements(prev => {
           const next = { ...prev };
           Object.keys(next).forEach(key => {
@@ -224,13 +269,14 @@ export default function GameDashboard() {
           });
           return next;
         });
-        // Optimistically remove from fragments list
+        // Remove from fragments list
         setFragments(prev => prev.filter(f => f.id !== discardFragmentId));
       }
     } catch (err: any) {
       showToast('⚠️ ' + (err.message || 'Error discarding fragment'));
     } finally {
       setIsProcessing(false);
+      setDiscardingId(null);
       setShowDiscardModal(false);
       setDiscardFragmentId(null);
     }
@@ -241,6 +287,7 @@ export default function GameDashboard() {
     setDiscardFragmentId(null);
   };
 
+  // ─── Submit Word ───────────────────────────────────────────────────────────
   const handleSubmitWord = async (boardLen: number) => {
     const placedFrags: string[] = [];
     for (let i = 0; i < boardLen; i++) {
@@ -258,8 +305,12 @@ export default function GameDashboard() {
       if (error) throw error;
 
       if (data.success) {
+        playVictory();
+        vibrateVictory();
         navigate('/winner');
       } else {
+        playError();
+        vibrateError();
         showToast('❌ Not a valid word — keep trying!');
         setPlacements(prev => {
           const next = { ...prev };
@@ -293,16 +344,25 @@ export default function GameDashboard() {
         <div className="announcement-toast">{toastMessage}</div>
       )}
 
+      {/* Offline Banner */}
+      {!isOnline && (
+        <div className="offline-banner">
+          📡 Connection Lost
+          <p>Please check your internet connection.</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
+
       {/* Player Info Header */}
       <div className="glass-panel" style={{ padding: '20px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{player?.display_name}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>ID: {player?.player_code}</p>
         </div>
-        <button 
-          className="glass-button accent" 
+        <button
+          className="glass-button accent"
           onClick={handleScanClick}
-          disabled={isProcessing}
+          disabled={isProcessing || !isOnline}
         >
           {isProcessing ? 'SCANNING...' : 'SCAN QR'}
         </button>
@@ -312,7 +372,13 @@ export default function GameDashboard() {
 
         {/* Collection */}
         <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ marginBottom: '12px' }}>Your Collection</h3>
+          {/* Inventory Counter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            <h3 className="fragment-counter">
+              Fragments
+              <span className="fragment-count-badge">{unplacedFragments.length}</span>
+            </h3>
+          </div>
           <div className="glass-panel" style={{ padding: '16px', minHeight: '100px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {unplacedFragments.length === 0 ? (
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', width: '100%', textAlign: 'center', marginTop: '20px' }}>
@@ -320,7 +386,13 @@ export default function GameDashboard() {
               </p>
             ) : (
               unplacedFragments.map(f => (
-                <LetterCard key={f.id} id={f.id} letter={f.letter} word_id={f.word_id} />
+                <LetterCard
+                  key={f.id}
+                  id={f.id}
+                  letter={f.letter}
+                  word_id={f.word_id}
+                  isDiscarding={discardingId === f.id}
+                />
               ))
             )}
           </div>
@@ -352,7 +424,7 @@ export default function GameDashboard() {
                     className="glass-button primary animate-slide-up"
                     style={{ width: '100%', marginTop: '12px' }}
                     onClick={() => handleSubmitWord(len)}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isOnline}
                   >
                     {isProcessing ? 'Submitting...' : 'Check Word ✓'}
                   </button>
