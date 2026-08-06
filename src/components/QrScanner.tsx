@@ -43,13 +43,18 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
     try {
       const devices = await Html5Qrcode.getCameras();
       if (!devices || devices.length === 0) throw new Error('No camera found on this device.');
+      
       setState('scanning');
 
       const qr = new Html5Qrcode('qr-reader-container');
       scannerRef.current = qr;
 
+      // Avoid Windows hardware errors by explicitly using the exact camera ID if there's only 1 camera (like most desktops)
+      // Only use facingMode: 'environment' for mobile devices that typically have multiple cameras.
+      const cameraConfig = devices.length > 1 ? { facingMode: 'environment' } : devices[0].id;
+
       await qr.start(
-        { facingMode: 'environment' },
+        cameraConfig,
         { fps: 15, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0, disableFlip: false },
         async (decodedText) => {
           if (scannedRef.current) return;
