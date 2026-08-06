@@ -99,5 +99,5 @@ Detailed documentation for running the live event is available in the `docs/` fo
 ---
 
 <div align="center">
-  <p>Built with ❤️ for community events.</p>
+  <p>Built with ❤️ for community events</p>
 </div>
