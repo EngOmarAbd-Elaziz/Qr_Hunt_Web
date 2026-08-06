@@ -148,7 +148,7 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
       </div>
 
       {/* ── Camera viewport ── */}
-      <div style={{ width: '100%', maxWidth: '480px', position: 'relative', flexShrink: 0 }}>
+      <div style={{ width: '100%', maxWidth: '320px', position: 'relative', flexShrink: 0, margin: '0 auto' }}>
 
         {/* Loading spinner */}
         {state === 'requesting' && (
@@ -181,44 +181,9 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
             overflow: 'hidden',
             width: '100%',
             background: '#000',
+            aspectRatio: '1 / 1',
           }}
         />
-
-        {/* Scan-frame overlay */}
-        {state === 'scanning' && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            pointerEvents: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {[
-              { top: '50%', left: '50%', tx: '-120px', ty: '-120px', bt: true, bl: true },
-              { top: '50%', right: '50%', tx: '92px',  ty: '-120px', bt: true, br: true },
-              { bottom: '50%', left: '50%', tx: '-120px', ty: '92px', bb: true, bl: true },
-              { bottom: '50%', right: '50%', tx: '92px',  ty: '92px', bb: true, br: true },
-            ].map((c, i) => (
-              <div key={i} style={{
-                position: 'absolute',
-                width: '24px', height: '24px',
-                top: c.top, bottom: c.bottom,
-                left: c.left, right: c.right,
-                transform: `translate(${c.tx}, ${c.ty})`,
-                borderTop:    c.bt ? '3px solid var(--primary-color)' : undefined,
-                borderBottom: c.bb ? '3px solid var(--primary-color)' : undefined,
-                borderLeft:   c.bl ? '3px solid var(--primary-color)' : undefined,
-                borderRight:  c.br ? '3px solid var(--primary-color)' : undefined,
-                borderRadius: '2px',
-              }} />
-            ))}
-            <div style={{
-              position: 'absolute',
-              width: '240px', height: '2px',
-              background: 'linear-gradient(90deg, transparent, var(--primary-color), transparent)',
-              boxShadow: '0 0 8px var(--primary-color)',
-              animation: 'qr-scanline 2s ease-in-out infinite',
-            }} />
-          </div>
-        )}
 
         {/* Error card */}
         {state === 'error' && (
@@ -245,7 +210,7 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
 
       {/* ── Torch ── */}
       {torchSupported && state === 'scanning' && (
-        <div style={{ width: '100%', maxWidth: '480px', marginTop: '12px', flexShrink: 0 }}>
+        <div style={{ width: '100%', maxWidth: '320px', marginTop: '12px', flexShrink: 0, margin: '12px auto 0' }}>
           <button
             onClick={toggleTorch}
             style={{
@@ -266,9 +231,8 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
 
       {/* ── Divider ── */}
       <div style={{
-        width: '100%', maxWidth: '480px',
+        width: '100%', maxWidth: '320px', margin: '20px auto 0',
         display: 'flex', alignItems: 'center', gap: '10px',
-        margin: '20px 0 0',
         color: 'var(--text-secondary)', fontSize: '0.75rem', letterSpacing: '1.5px',
         flexShrink: 0,
       }}>
@@ -279,9 +243,8 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
 
       {/* ── Manual token — ALWAYS VISIBLE ── */}
       <div style={{
-        width: '100%', maxWidth: '480px',
+        width: '100%', maxWidth: '320px', margin: '12px auto 0',
         display: 'flex', gap: '8px',
-        marginTop: '12px',
         flexShrink: 0,
         paddingBottom: '28px',
       }}>
@@ -322,16 +285,8 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
         @keyframes qr-spin {
           to { transform: rotate(360deg); }
         }
-        @keyframes qr-scanline {
-          0%, 100% { transform: translateY(-108px); opacity: 0.35; }
-          50%       { transform: translateY(108px);  opacity: 1;    }
-        }
-        #qr-reader-container video          { width: 100% !important; display: block; }
-        #qr-reader-container img            { display: none !important; }
-        #qr-reader-container > div         { border: none !important; box-shadow: none !important; }
-        #qr-reader__scan_region            { border: none !important; }
-        #qr-reader__dashboard              { display: none !important; }
-        #qr-reader__header_message         { display: none !important; }
+        /* Hide html5-qrcode branding but keep layout intact */
+        #qr-reader-container a { display: none !important; }
       `}</style>
     </div>
   );
