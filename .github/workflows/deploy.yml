@@ -1,3 +1,4 @@
+# .github/workflows/deploy.yml
 name: Deploy QR Hunt to GitHub Pages
 
 on:
