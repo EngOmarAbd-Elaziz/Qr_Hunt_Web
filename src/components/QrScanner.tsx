@@ -15,6 +15,7 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
   const [manualToken, setManualToken] = useState('');
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  const [isMirrored, setIsMirrored] = useState(false);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannedRef = useRef(false);
@@ -49,9 +50,12 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
       const qr = new Html5Qrcode('qr-reader-container');
       scannerRef.current = qr;
 
+      const isDesktop = devices.length === 1;
+      setIsMirrored(isDesktop);
+
       // Avoid Windows hardware errors by explicitly using the exact camera ID if there's only 1 camera (like most desktops)
       // Only use facingMode: 'environment' for mobile devices that typically have multiple cameras.
-      const cameraConfig = devices.length > 1 ? { facingMode: 'environment' } : devices[0].id;
+      const cameraConfig = isDesktop ? devices[0].id : { facingMode: 'environment' };
 
       await qr.start(
         cameraConfig,
@@ -180,6 +184,7 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
         {/* html5-qrcode video mount point */}
         <div
           id="qr-reader-container"
+          className={isMirrored ? 'mirrored-video' : ''}
           style={{
             display: state === 'scanning' ? 'block' : 'none',
             borderRadius: '20px',
@@ -289,6 +294,10 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
       <style>{`
         @keyframes qr-spin {
           to { transform: rotate(360deg); }
+        }
+        /* Mirror video for webcams */
+        .mirrored-video video {
+          transform: scaleX(-1);
         }
         /* Hide html5-qrcode branding but keep layout intact */
         #qr-reader-container a { display: none !important; }
