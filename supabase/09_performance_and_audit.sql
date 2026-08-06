@@ -1,7 +1,7 @@
 -- supabase/09_performance_and_audit.sql
 
 -- 1. AUDIT LOGS TABLE
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
