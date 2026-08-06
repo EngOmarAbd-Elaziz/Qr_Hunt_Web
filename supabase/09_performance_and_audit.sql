@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 -- RLS for audit_logs (Admin only)
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admins can read audit logs" ON audit_logs;
 CREATE POLICY "Admins can read audit logs" ON audit_logs FOR SELECT USING (is_admin());
 
 -- 2. PERFORMANCE INDEXES
