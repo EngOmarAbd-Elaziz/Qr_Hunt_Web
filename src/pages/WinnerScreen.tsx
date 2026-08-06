@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 export default function WinnerScreen() {
   const navigate = useNavigate();
   const [player, setPlayer] = useState<any>(null);
   const [winningWord, setWinningWord] = useState<string>('');
   const [loading, setLoading] = useState(true);
+
+  // Lock scroll as soon as the winner overlay is visible
+  useScrollLock(!loading);
 
   useEffect(() => {
     checkWinner();
