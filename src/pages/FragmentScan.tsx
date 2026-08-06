@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase';
 import { playScanSuccess } from '../lib/sound';
 import { vibrateSuccess } from '../lib/haptics';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { LetterCard } from '../components/LetterCard';
+import { getColorForWord } from '../lib/colors';
 
 export default function FragmentScan() {
   const { token } = useParams<{ token: string }>();
@@ -52,6 +54,7 @@ export default function FragmentScan() {
       setFragmentData({
         letter: data.letter,
         hint: data.hint,
+        word_id: data.word_id,
         alreadyOwned: data.already_owned
       });
 
@@ -91,26 +94,19 @@ export default function FragmentScan() {
         </div>
       )}
 
-      {status === 'success' && (
+      {status === 'success' && fragmentData && (
         <div className="glass-panel" style={{
           padding: '40px',
-          borderColor: 'var(--success-color)',
-          boxShadow: '0 8px 32px var(--success-glow)'
+          borderColor: getColorForWord(fragmentData.word_id),
+          boxShadow: `0 8px 32px ${getColorForWord(fragmentData.word_id)}40`
         }}>
-          <h2 style={{ color: 'var(--success-color)', marginBottom: '24px', fontSize: '1.4rem', letterSpacing: '2px' }}>
-            {fragmentData?.alreadyOwned ? 'ALREADY COLLECTED' : 'FRAGMENT FOUND!'}
+          <h2 style={{ color: getColorForWord(fragmentData.word_id), marginBottom: '24px', fontSize: '1.4rem', letterSpacing: '2px' }}>
+            {fragmentData.alreadyOwned ? 'ALREADY COLLECTED' : 'FRAGMENT FOUND!'}
           </h2>
-          <div className="letter-card" style={{
-            margin: '0 auto 24px',
-            width: '90px',
-            height: '90px',
-            fontSize: '3rem',
-            boxShadow: '0 0 30px var(--success-glow)',
-            borderColor: 'var(--success-color)'
-          }}>
-            {fragmentData?.letter}
+          <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
+            <LetterCard id="scan-preview" letter={fragmentData.letter} word_id={fragmentData.word_id} />
           </div>
-          {fragmentData?.hint && (
+          {fragmentData.hint && (
             <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '20px' }}>
               Hint: "{fragmentData.hint}"
             </p>

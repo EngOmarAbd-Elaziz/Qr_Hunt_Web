@@ -88,6 +88,7 @@ DECLARE
     v_player_status player_status;
     v_letter TEXT;
     v_hint TEXT;
+    v_word_id UUID;
 BEGIN
     -- Get current authenticated user
     v_player_id := auth.uid();
@@ -102,8 +103,8 @@ BEGIN
     END IF;
 
     -- Lock the fragment row
-    SELECT id, status, letter, hint, collected_by 
-    INTO v_fragment_id, v_status, v_letter, v_hint, v_collected_by
+    SELECT id, status, letter, hint, collected_by, word_id 
+    INTO v_fragment_id, v_status, v_letter, v_hint, v_collected_by, v_word_id
     FROM fragments 
     WHERE public_token = p_token
     FOR UPDATE;
@@ -120,7 +121,8 @@ BEGIN
                 'already_owned', true,
                 'fragment_id', v_fragment_id,
                 'letter', v_letter,
-                'hint', v_hint
+                'hint', v_hint,
+                'word_id', v_word_id
             );
         ELSE
             RAISE EXCEPTION 'This fragment has already been discovered.';
@@ -145,7 +147,8 @@ BEGIN
         'already_owned', false,
         'fragment_id', v_fragment_id,
         'letter', v_letter,
-        'hint', v_hint
+        'hint', v_hint,
+        'word_id', v_word_id
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

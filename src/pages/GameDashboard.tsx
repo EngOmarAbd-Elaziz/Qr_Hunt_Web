@@ -107,10 +107,10 @@ export default function GameDashboard() {
         })
         .subscribe();
 
-      // Subscribe to this player's new fragments
+      // Subscribe to this player's fragment updates (inserts, updates, deletes)
       const fragSub = supabase.channel(`player-frags-${playerIdRef}`)
         .on('postgres_changes', {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'player_fragments',
           filter: `player_id=eq.${playerIdRef}`
@@ -188,6 +188,10 @@ export default function GameDashboard() {
       .eq('player_id', session.user.id);
 
     if (fragData) {
+      console.log('--- DEBUG INITIAL LOAD ---');
+      fragData.forEach((f: any) => {
+        console.log(`Fragment ID: ${f.fragment_id}, Word ID: ${f.fragments?.word_id}, Letter: ${f.fragments?.letter}`);
+      });
       setFragments(fragData.map((f: any) => ({
         id: f.fragment_id,
         letter: f.fragments?.letter || '?',
