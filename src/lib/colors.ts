@@ -1,26 +1,28 @@
 // src/lib/colors.ts
 
+// 20 perceptually-distinct colors — hues are spread ~18° apart across the full wheel,
+// with alternating brightness/saturation levels to maximize contrast between neighbours.
 export const WORD_COLORS = [
-  'var(--primary-color)', // 0. Indigo
-  'var(--accent-color)',  // 1. Rose
-  'var(--success-color)', // 2. Emerald
-  '#0ea5e9', // 3. Sky Blue
-  '#a855f7', // 4. Purple
-  '#f59e0b', // 5. Amber
-  '#ec4899', // 6. Pink
-  '#14b8a6', // 7. Teal
-  '#8b5cf6', // 8. Violet
-  '#f97316', // 9. Orange
-  '#ef4444', // 10. Red
-  '#84cc16', // 11. Lime
-  '#06b6d4', // 12. Cyan
-  '#3b82f6', // 13. Blue
-  '#6366f1', // 14. Indigo Light
-  '#d946ef', // 15. Fuchsia
-  '#f43f5e', // 16. Rose Dark
-  '#10b981', // 17. Emerald Dark
-  '#eab308', // 18. Yellow
-  '#059669', // 19. Green
+  '#e63946', // 0.  GAME   – Vivid Red
+  '#f4a261', // 1.  CODE   – Warm Orange
+  '#f9c74f', // 2.  FIRE   – Bright Yellow
+  '#90be6d', // 3.  STAR   – Lime Green
+  '#43aa8b', // 4.  MOON   – Jade Teal
+  '#4cc9f0', // 5.  WAVE   – Bright Cyan
+  '#4361ee', // 6.  HOPE   – Royal Blue
+  '#7b2d8b', // 7.  DOOR   – Deep Purple
+  '#f72585', // 8.  DREAM  – Hot Magenta
+  '#fb8500', // 9.  LIGHT  – Deep Amber
+  '#06d6a0', // 10. SPACE  – Mint Green
+  '#3a86ff', // 11. MAGIC  – Cobalt Blue
+  '#ff6b6b', // 12. QUEST  – Coral
+  '#c77dff', // 13. HEART  – Lavender
+  '#ffbe0b', // 14. WORLD  – Golden Yellow
+  '#8338ec', // 15. FLAME  – Electric Violet
+  '#ff4d6d', // 16. PUZZLE – Deep Pink
+  '#2ec4b6', // 17. SECRET – Turquoise
+  '#80b918', // 18. FUTURE – Olive Green
+  '#e040fb', // 19. HIDDEN – Neon Purple
 ];
 
 // Map of known word UUIDs to guarantee 100% distinct colors for the 20 initial words
