@@ -7,6 +7,7 @@ import { LetterCard } from '../components/LetterCard';
 import { WordSlot } from '../components/WordSlot';
 import { TrashArea } from '../components/TrashArea';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import QrScanner from '../components/QrScanner';
 import { withCache, invalidateCache } from '../lib/cache';
 import { playVictory, playError, playDiscard } from '../lib/sound';
 import { vibrateVictory, vibrateError } from '../lib/haptics';
@@ -32,6 +33,7 @@ export default function GameDashboard() {
   const [discardFragmentId, setDiscardFragmentId] = useState<string | null>(null);
   // Track which fragment is playing the discard animation
   const [discardingId, setDiscardingId] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   const leaderboardIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -332,9 +334,13 @@ export default function GameDashboard() {
   };
 
   const handleScanClick = () => {
-    if (isProcessing) return;
-    const token = prompt('Enter QR Token (or use native camera to scan):');
-    if (token) navigate(`/f/${token.trim()}`);
+    if (isProcessing || !isOnline) return;
+    setShowScanner(true);
+  };
+
+  const handleScanResult = (token: string) => {
+    setShowScanner(false);
+    navigate(`/f/${token}`);
   };
 
   if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
@@ -344,6 +350,14 @@ export default function GameDashboard() {
 
   return (
     <div className="animate-slide-up">
+      {/* QR Camera Scanner Overlay */}
+      {showScanner && (
+        <QrScanner
+          onScan={handleScanResult}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
       {toastMessage && (
         <div className="announcement-toast">{toastMessage}</div>
       )}
