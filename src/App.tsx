@@ -26,12 +26,14 @@ function App() {
 
   return (
     <Router basename={import.meta.env.BASE_URL}>
-      <div className="app-container">
-        {/* Global App Header could go here, or handled per-page */}
-        <header className="app-header">
+      {/* Global App Header spans full width */}
+      <header className="app-header">
+        <div className="header-content">
           <div className="logo-text" onDoubleClick={() => window.location.href = `${import.meta.env.BASE_URL}admin`}>QR HUNT</div>
-        </header>
-
+        </div>
+      </header>
+      
+      <div className="app-container">
         <main className="page-content">
           <Routes>
             <Route path="/" element={<GameDashboard />} />

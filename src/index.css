@@ -118,16 +118,24 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Header */
 .app-header {
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  width: 100%;
   border-bottom: 1px solid var(--card-border);
   background: rgba(11, 15, 25, 0.8);
   backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
   z-index: 50;
+  /* iOS notch safe area support */
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.header-content {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .logo-text {

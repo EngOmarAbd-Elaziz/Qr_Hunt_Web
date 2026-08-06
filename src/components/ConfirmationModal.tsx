@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+
 // ConfirmationModal
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -22,7 +24,7 @@ export function ConfirmationModal({
 }: ConfirmationModalProps) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed',
       top: 0,
@@ -34,7 +36,7 @@ export function ConfirmationModal({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1000,
+      zIndex: 9999,
     }}>
       <div className="glass-panel animate-slide-up" style={{
         padding: '32px',
@@ -66,6 +68,7 @@ export function ConfirmationModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
