@@ -487,6 +487,18 @@ export default function GameDashboard() {
         confirmText="Discard"
         isProcessing={isProcessing}
       />
+
+      {/* Portfolio Signature */}
+      <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '20px' }}>
+        <a 
+          href="https://engomarabd-elaziz.github.io/My-Portofolio/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="portfolio-signature"
+        >
+          Made by Eng. Omar Abdelaziz
+        </a>
+      </div>
     </div>
   );
 }

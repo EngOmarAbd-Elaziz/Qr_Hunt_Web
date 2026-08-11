@@ -6,6 +6,7 @@ import WinnerScreen from './pages/WinnerScreen';
 import Registration from './pages/Registration';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
+import fcaiLogo from './assets/fcai-gdc-logo.png';
 
 function App() {
   const [session, setSession] = useState<any>(null);
@@ -29,7 +30,10 @@ function App() {
       {/* Global App Header spans full width */}
       <header className="app-header">
         <div className="header-content">
-          <div className="logo-text" onDoubleClick={() => window.location.href = `${import.meta.env.BASE_URL}admin`}>QR HUNT</div>
+          <div className="brand-container">
+            <img src={fcaiLogo} alt="FCAI GDC" className="community-logo" />
+            <div className="logo-text" onDoubleClick={() => window.location.href = `${import.meta.env.BASE_URL}admin`}>FCAI GDC QR HUNT</div>
+          </div>
         </div>
       </header>
       

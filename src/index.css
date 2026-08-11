@@ -6,16 +6,18 @@
   --bg-gradient: radial-gradient(circle at top right, #1a1e36 0%, #0b0f19 70%);
   --text-primary: #ffffff;
   --text-secondary: #94a3b8;
-  
-  --primary-color: #6366f1; /* Indigo */
+
+  --primary-color: #6366f1;
+  /* Indigo */
   --primary-glow: rgba(99, 102, 241, 0.5);
-  
-  --accent-color: #f43f5e; /* Rose */
+
+  --accent-color: #f43f5e;
+  /* Rose */
   --accent-glow: rgba(244, 63, 94, 0.5);
-  
+
   --success-color: #10b981;
   --success-glow: rgba(16, 185, 129, 0.5);
-  
+
   --card-bg: rgba(255, 255, 255, 0.03);
   --card-border: rgba(255, 255, 255, 0.1);
   --card-blur: blur(12px);
@@ -41,7 +43,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -99,8 +106,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Layout */
+.brand-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.community-logo {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
+}
+
 .app-container {
-  max-width: 500px; /* Mobile first */
+  max-width: 500px;
+  /* Mobile first */
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
@@ -178,14 +198,15 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 2rem;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-  border: 1px solid rgba(255,255,255,0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   cursor: grab;
   color: white;
   user-select: none;
-  touch-action: none; /* Required for dnd-kit on mobile */
+  touch-action: none;
+  /* Required for dnd-kit on mobile */
 }
 
 .letter-card.dragging {
@@ -209,11 +230,11 @@ h1, h2, h3, h4, h5, h6 {
   width: 60px;
   height: 60px;
   border-radius: 12px;
-  border: 2px dashed rgba(255,255,255,0.2);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   transition: all 0.2s;
 }
 
@@ -224,8 +245,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Animations */
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-slide-up {
@@ -233,9 +261,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
 }
 
 /* Realtime Announcement Toast */
@@ -257,13 +293,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes slideDown {
-  from { top: -50px; opacity: 0; }
-  to { top: 80px; opacity: 1; }
+  from {
+    top: -50px;
+    opacity: 0;
+  }
+
+  to {
+    top: 80px;
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 /* ================================
@@ -336,9 +384,23 @@ h1, h2, h3, h4, h5, h6 {
    DISCARD ANIMATION
    ================================ */
 @keyframes discardPoof {
-  0%   { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0px); }
-  40%  { opacity: 0.8; transform: scale(0.7) rotate(-8deg); filter: blur(1px); }
-  100% { opacity: 0; transform: scale(0) rotate(15deg); filter: blur(6px); }
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0px);
+  }
+
+  40% {
+    opacity: 0.8;
+    transform: scale(0.7) rotate(-8deg);
+    filter: blur(1px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(15deg);
+    filter: blur(6px);
+  }
 }
 
 .letter-card.discarding {
@@ -361,4 +423,23 @@ h1, h2, h3, h4, h5, h6 {
   .announcement-toast {
     animation: none;
   }
+}
+
+/* ================================
+   PORTFOLIO SIGNATURE
+   ================================ */
+.portfolio-signature {
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-block;
+  padding: 8px 16px;
+}
+
+.portfolio-signature:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
