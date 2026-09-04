@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ConfirmationModal } from '../components/ConfirmationModal';
@@ -29,7 +29,6 @@ export default function AdminDashboard({ session }: { session: any }) {
     const { data, error } = await supabase.from('admins').select('id').eq('id', session.user.id).single();
     if (data && !error) {
       setIsAdmin(true);
-      fetchStats();
     } else {
       setIsAdmin(false);
     }
@@ -82,7 +81,7 @@ export default function AdminDashboard({ session }: { session: any }) {
     }
   };
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     const { count: totalPlayers } = await supabase.from('players').select('*', { count: 'exact', head: true });
     const { count: winners } = await supabase.from('players').select('*', { count: 'exact', head: true }).eq('status', 'WON');
     const { count: solvedWords } = await supabase.from('words').select('*', { count: 'exact', head: true }).eq('status', 'SOLVED');
@@ -101,7 +100,38 @@ export default function AdminDashboard({ session }: { session: any }) {
       .order('id');
     
     if (frags) setAllFragments(frags);
-  };
+  }, []);
+
+  // ── Real-time subscriptions: auto-refresh admin stats when game events occur ──
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    // Initial load
+    fetchStats();
+
+    // Re-fetch all stats on any change to these tables
+    const playersSub = supabase
+      .channel('admin-players-watch')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'players' }, () => fetchStats())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'players' }, () => fetchStats())
+      .subscribe();
+
+    const fragmentsSub = supabase
+      .channel('admin-fragments-watch')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'fragments' }, () => fetchStats())
+      .subscribe();
+
+    const wordsSub = supabase
+      .channel('admin-words-watch')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'words' }, () => fetchStats())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(playersSub);
+      supabase.removeChannel(fragmentsSub);
+      supabase.removeChannel(wordsSub);
+    };
+  }, [isAdmin, fetchStats]);
 
   const handleReactivate = async (fragmentId: string) => {
     if (!confirm('Are you sure you want to reactivate this fragment so others can scan it?')) return;
