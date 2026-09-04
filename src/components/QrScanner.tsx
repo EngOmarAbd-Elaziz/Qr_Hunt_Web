@@ -290,9 +290,9 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
         @keyframes qr-spin {
           to { transform: rotate(360deg); }
         }
-        /* Fix mirror effect: flip the video display horizontally */
+        /* Fix mirror effect: remove horizontal flip */
         #qr-reader-container video {
-          transform: scaleX(-1);
+          transform: none !important;
         }
         /* Hide html5-qrcode branding but keep layout intact */
         #qr-reader-container a { display: none !important; }

@@ -105,6 +105,19 @@ h6 {
   cursor: not-allowed;
 }
 
+.reset-game-btn {
+  border-color: #ff4444 !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease;
+}
+
+.reset-game-btn:hover {
+  background-color: #ff4444 !important;
+  color: var(--bg-color) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4) !important;
+}
+
 /* Layout */
 .brand-container {
   display: flex;

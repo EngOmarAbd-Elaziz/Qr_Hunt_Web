@@ -46,10 +46,10 @@ BEGIN
     END IF;
 
     -- 2. Delete all player fragments
-    DELETE FROM player_fragments;
+    DELETE FROM player_fragments WHERE true;
 
     -- 3. Delete all audit logs
-    DELETE FROM audit_logs;
+    DELETE FROM audit_logs WHERE true;
 
     -- 4. Reset all fragments
     UPDATE fragments 
@@ -57,18 +57,20 @@ BEGIN
         status = 'AVAILABLE',
         collected_by = NULL,
         collected_at = NULL,
-        used_in_winning_word = FALSE;
+        used_in_winning_word = FALSE
+    WHERE true;
 
     -- 5. Reset all words
     UPDATE words
     SET
         status = 'HIDDEN',
         solved_by = NULL,
-        solved_at = NULL;
+        solved_at = NULL
+    WHERE true;
 
     -- 6. Delete all players
     -- Since player_fragments, audit_logs and words references have ON DELETE CASCADE/SET NULL, this is safe
-    DELETE FROM players;
+    DELETE FROM players WHERE true;
 
     -- 7. Update global reset version
     v_new_version := uuid_generate_v4();

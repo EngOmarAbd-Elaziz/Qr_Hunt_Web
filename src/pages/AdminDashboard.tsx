@@ -147,11 +147,10 @@ export default function AdminDashboard({ session }: { session: any }) {
         <h2>Admin Dashboard</h2>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button 
-            className="glass-button accent" 
+            className="glass-button accent reset-game-btn" 
             onClick={() => setShowResetModal(true)} 
-            style={{ borderColor: '#ff4444', color: '#ff4444' }}
           >
-            ⚠️ Reset Game
+            !Reset Game!
           </button>
           <button className="glass-button" onClick={handleLogout}>Logout</button>
         </div>
