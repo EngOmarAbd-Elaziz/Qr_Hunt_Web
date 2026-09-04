@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 export default function AdminDashboard({ session }: { session: any }) {
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
@@ -9,6 +12,9 @@ export default function AdminDashboard({ session }: { session: any }) {
   const [stats, setStats] = useState<any>(null);
   const [allFragments, setAllFragments] = useState<any[]>([]);
   const [expandedWord, setExpandedWord] = useState<string | null>(null);
+
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (session?.user?.email) {
@@ -19,11 +25,13 @@ export default function AdminDashboard({ session }: { session: any }) {
   }, [session]);
 
   const checkAdminStatus = async () => {
-    // If they have an email, they are likely the admin (players are anonymous)
-    const { error } = await supabase.from('players').select('count', { count: 'exact' });
-    if (!error) {
+    // Check if the authenticated user explicitly exists in the admins table
+    const { data, error } = await supabase.from('admins').select('id').eq('id', session.user.id).single();
+    if (data && !error) {
       setIsAdmin(true);
       fetchStats();
+    } else {
+      setIsAdmin(false);
     }
     setLoading(false);
   };
@@ -35,6 +43,29 @@ export default function AdminDashboard({ session }: { session: any }) {
     if (error) {
       alert(error.message);
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
+
+  const handleResetGame = async () => {
+    setIsResetting(true);
+    try {
+      const { data, error } = await supabase.rpc('reset_game');
+      if (error) throw error;
+      if (data.success) {
+        localStorage.setItem('qr_hunt_reset_version', data.new_version);
+        alert('Game has been successfully reset. All players have been cleared.');
+        fetchStats();
+      }
+    } catch (err: any) {
+      alert('Error resetting game: ' + err.message);
+    } finally {
+      setIsResetting(false);
+      setShowResetModal(false);
     }
   };
 
@@ -114,7 +145,16 @@ export default function AdminDashboard({ session }: { session: any }) {
     <div className="animate-slide-up">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h2>Admin Dashboard</h2>
-        <button className="glass-button" onClick={() => supabase.auth.signOut()}>Logout</button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            className="glass-button accent" 
+            onClick={() => setShowResetModal(true)} 
+            style={{ borderColor: '#ff4444', color: '#ff4444' }}
+          >
+            ⚠️ Reset Game
+          </button>
+          <button className="glass-button" onClick={handleLogout}>Logout</button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
@@ -210,6 +250,16 @@ export default function AdminDashboard({ session }: { session: any }) {
           </div>
         );
       })}
+
+      <ConfirmationModal
+        isOpen={showResetModal}
+        title="⚠️ Reset Game Data?"
+        body="Are you absolutely sure you want to reset the game? This will ERASE all players, collections, and audit logs. All words will be hidden and all physical QR codes will become available again. Active player sessions will be kicked out."
+        confirmText="Yes, Reset Everything"
+        onConfirm={handleResetGame}
+        onCancel={() => setShowResetModal(false)}
+        isProcessing={isResetting}
+      />
     </div>
   );
 }

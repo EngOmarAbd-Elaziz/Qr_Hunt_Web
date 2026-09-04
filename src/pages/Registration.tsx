@@ -41,6 +41,11 @@ export default function Registration() {
 
       if (error) throw error;
 
+      const { data: versionData } = await supabase.rpc('get_reset_version');
+      if (versionData) {
+        localStorage.setItem('qr_hunt_reset_version', versionData);
+      }
+
       localStorage.setItem('qr_hunt_player_id', authData.user?.id || '');
       navigate('/');
     } catch (err: any) {
