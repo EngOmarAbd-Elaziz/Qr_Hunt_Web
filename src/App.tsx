@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import GameDashboard from './pages/GameDashboard';
 import { clearGameStorage } from './lib/reset';
 import FragmentScan from './pages/FragmentScan';
@@ -10,7 +10,6 @@ import { supabase } from './lib/supabase';
 import fcaiLogo from './assets/fcai-gdc-logo.png';
 
 function GlobalResetHandler() {
-  const navigate = useNavigate();
   const location = useLocation();
   const [countdown, setCountdown] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -33,10 +32,11 @@ function GlobalResetHandler() {
       });
     }, 1000);
 
-    // After 3 seconds, clear state and redirect
+    // After 3 seconds, clear state and hard redirect
     setTimeout(async () => {
       await clearGameStorage();
-      navigate('/register');
+      // Hard redirect instead of navigate() prevents any React state/unmount crashes
+      window.location.href = `${import.meta.env.BASE_URL}register`;
     }, 3000);
   };
 
@@ -46,7 +46,8 @@ function GlobalResetHandler() {
       const { data, error } = await supabase.rpc('get_reset_version');
       if (error || !data) return;
       const localVersion = localStorage.getItem('qr_hunt_reset_version');
-      if (localVersion && localVersion !== data) {
+      const isPlayer = !!localStorage.getItem('qr_hunt_player_id');
+      if (localVersion && localVersion !== data && isPlayer) {
         triggerReset();
       }
     };
@@ -54,14 +55,13 @@ function GlobalResetHandler() {
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // 2. Broadcast channel — admin sends this event immediately after reset_game() succeeds.
-    //    Works in real-time across ALL connected browsers with zero extra Supabase setup.
+    // 2. Broadcast channel — works in real-time across ALL connected browsers
     const channel = supabase
-      .channel('game-reset-broadcast', { config: { broadcast: { self: false } } })
+      .channel('game-reset-broadcast')
       .on('broadcast', { event: 'game_reset' }, () => {
-        const localVersion = localStorage.getItem('qr_hunt_reset_version');
-        // Only kick out registered players (those who have a stored version)
-        if (localVersion) {
+        const isPlayer = !!localStorage.getItem('qr_hunt_player_id');
+        // Only kick out actual registered players, not the admin
+        if (isPlayer) {
           triggerReset();
         }
       })

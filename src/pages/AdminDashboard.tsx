@@ -53,31 +53,33 @@ export default function AdminDashboard({ session }: { session: any }) {
   const handleResetGame = async () => {
     setIsResetting(true);
     try {
+      // 1. Broadcast to ALL connected player browsers immediately so they start their 3s countdown
+      const broadcastChannel = supabase.channel('game-reset-broadcast');
+      await broadcastChannel.subscribe();
+      await broadcastChannel.send({
+        type: 'broadcast',
+        event: 'game_reset',
+        payload: { timestamp: Date.now() },
+      });
+      // Small delay so the broadcast propagates before DB locks up
+      await new Promise(res => setTimeout(res, 200));
+      supabase.removeChannel(broadcastChannel);
+
+      // 2. Perform the actual DB reset
       const { data, error } = await supabase.rpc('reset_game');
       if (error) throw error;
+      
       if (data.success) {
         localStorage.setItem('qr_hunt_reset_version', data.new_version);
-
-        // Broadcast to ALL connected player browsers immediately
-        const broadcastChannel = supabase.channel('game-reset-broadcast');
-        await broadcastChannel.subscribe();
-        await broadcastChannel.send({
-          type: 'broadcast',
-          event: 'game_reset',
-          payload: { version: data.new_version },
-        });
-        // Small delay so the broadcast propagates before we clean up
-        await new Promise(res => setTimeout(res, 300));
-        supabase.removeChannel(broadcastChannel);
-
-        alert('Game has been successfully reset. All players are being redirected.');
+        setShowResetModal(false);
         fetchStats();
+        // Use a non-blocking toast/state instead of alert if possible, or just a brief timeout
+        setTimeout(() => alert('Game has been successfully reset. All players are being redirected.'), 10);
       }
     } catch (err: any) {
       alert('Error resetting game: ' + err.message);
     } finally {
       setIsResetting(false);
-      setShowResetModal(false);
     }
   };
 
