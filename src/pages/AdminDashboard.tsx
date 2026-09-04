@@ -58,7 +58,20 @@ export default function AdminDashboard({ session }: { session: any }) {
       if (error) throw error;
       if (data.success) {
         localStorage.setItem('qr_hunt_reset_version', data.new_version);
-        alert('Game has been successfully reset. All players have been cleared.');
+
+        // Broadcast to ALL connected player browsers immediately
+        const broadcastChannel = supabase.channel('game-reset-broadcast');
+        await broadcastChannel.subscribe();
+        await broadcastChannel.send({
+          type: 'broadcast',
+          event: 'game_reset',
+          payload: { version: data.new_version },
+        });
+        // Small delay so the broadcast propagates before we clean up
+        await new Promise(res => setTimeout(res, 300));
+        supabase.removeChannel(broadcastChannel);
+
+        alert('Game has been successfully reset. All players are being redirected.');
         fetchStats();
       }
     } catch (err: any) {

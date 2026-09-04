@@ -14,10 +14,14 @@ function GlobalResetHandler() {
   const location = useLocation();
   const [countdown, setCountdown] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const triggeredRef = useRef(false); // prevent double-trigger
 
-  const triggerReset = async () => {
-    // Show 2-second countdown
-    setCountdown(2);
+  const triggerReset = () => {
+    if (triggeredRef.current) return;
+    triggeredRef.current = true;
+
+    // Show 3-second countdown
+    setCountdown(3);
     timerRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev === null || prev <= 1) {
@@ -29,15 +33,15 @@ function GlobalResetHandler() {
       });
     }, 1000);
 
-    // After 2 seconds, clear state and redirect
+    // After 3 seconds, clear state and redirect
     setTimeout(async () => {
       await clearGameStorage();
       navigate('/register');
-    }, 2000);
+    }, 3000);
   };
 
   useEffect(() => {
-    // 1. On mount / route change: check version via RPC
+    // 1. On mount / route change: RPC fallback for returning/offline browsers
     const checkReset = async () => {
       const { data, error } = await supabase.rpc('get_reset_version');
       if (error || !data) return;
@@ -50,26 +54,20 @@ function GlobalResetHandler() {
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // 2. Real-time subscription: fires immediately when admin resets
+    // 2. Broadcast channel — admin sends this event immediately after reset_game() succeeds.
+    //    Works in real-time across ALL connected browsers with zero extra Supabase setup.
     const channel = supabase
-      .channel('game-state-reset')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'game_state', filter: 'id=eq.1' },
-        async (payload) => {
-          const newVersion = (payload.new as any)?.reset_version;
-          if (!newVersion) return;
-          // Update local storage then redirect all players
-          const localVersion = localStorage.getItem('qr_hunt_reset_version');
-          // If the player had a version (i.e. is a registered player), kick them
-          if (localVersion) {
-            triggerReset();
-          }
+      .channel('game-reset-broadcast', { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'game_reset' }, () => {
+        const localVersion = localStorage.getItem('qr_hunt_reset_version');
+        // Only kick out registered players (those who have a stored version)
+        if (localVersion) {
+          triggerReset();
         }
-      )
+      })
       .subscribe();
 
-    return () => { channel.unsubscribe(); };
+    return () => { supabase.removeChannel(channel); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (countdown === null) return null;
@@ -77,21 +75,20 @@ function GlobalResetHandler() {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 99999,
-      background: 'rgba(5, 8, 18, 0.92)',
+      background: 'rgba(5, 8, 18, 0.95)',
       backdropFilter: 'blur(16px)',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       gap: '16px', color: '#fff',
       fontFamily: 'Outfit, sans-serif',
-      animation: 'fadeIn 0.3s ease'
     }}>
       <div style={{ fontSize: '3rem' }}>🔄</div>
       <h2 style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Game Reset</h2>
-      <p style={{ color: '#94a3b8', textAlign: 'center', maxWidth: '260px' }}>
-        The admin has reset the game. Redirecting you in...
+      <p style={{ color: '#94a3b8', textAlign: 'center', maxWidth: '260px', lineHeight: 1.6 }}>
+        The admin has reset the game.<br />Redirecting you in...
       </p>
       <div style={{
-        fontSize: '3rem', fontWeight: 800,
+        fontSize: '4rem', fontWeight: 800,
         background: 'linear-gradient(135deg, #6366f1, #f43f5e)',
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
