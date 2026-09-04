@@ -111,6 +111,18 @@ export default function AdminDashboard({ session }: { session: any }) {
       });
       if (error) throw error;
       if (data.success) {
+        // If the fragment was held by a player, send them a real-time notification
+        if (data.affected_player_id) {
+          const notifyChannel = supabase.channel(`player-alert-${data.affected_player_id}`);
+          await notifyChannel.subscribe();
+          await notifyChannel.send({
+            type: 'broadcast',
+            event: 'fragment_reclaimed',
+            payload: { fragment_id: fragmentId },
+          });
+          await new Promise(res => setTimeout(res, 200));
+          supabase.removeChannel(notifyChannel);
+        }
         alert('Reactivated successfully!');
         fetchStats();
       }

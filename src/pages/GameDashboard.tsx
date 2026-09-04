@@ -146,10 +146,37 @@ export default function GameDashboard() {
         })
         .subscribe();
 
+      // Subscribe to admin-targeted alerts for this specific player (Broadcast channel)
+      // Fires when admin reactivates a fragment this player owns — no page refresh needed.
+      const alertSub = supabase
+        .channel(`player-alert-${playerIdRef}`, { config: { broadcast: { self: false } } })
+        .on('broadcast', { event: 'fragment_reclaimed' }, (payload) => {
+          const reclaimedId: string = payload.payload?.fragment_id;
+          if (!reclaimedId) return;
+
+          // Show a clear warning toast
+          showToast('⚠️ An admin has reclaimed one of your fragments. It is now available for others.');
+
+          // Remove from fragment list
+          setFragments(prev => prev.filter(f => f.id !== reclaimedId));
+
+          // Remove from any board slot it might be placed in
+          setPlacements(prev => {
+            const next = { ...prev };
+            let changed = false;
+            Object.keys(next).forEach(key => {
+              if (next[key]?.id === reclaimedId) { delete next[key]; changed = true; }
+            });
+            return changed ? next : prev;
+          });
+        })
+        .subscribe();
+
       return () => {
         wordSub.unsubscribe();
         fragSub.unsubscribe();
         playerSub.unsubscribe();
+        supabase.removeChannel(alertSub);
       };
     };
 
