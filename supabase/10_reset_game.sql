@@ -16,6 +16,9 @@ ON CONFLICT (id) DO NOTHING;
 -- Allow anyone to read the reset version, but only admins to update
 ALTER TABLE game_state ENABLE ROW LEVEL SECURITY;
 
+-- Required for Supabase Realtime to include column values in UPDATE payloads
+ALTER TABLE game_state REPLICA IDENTITY FULL;
+
 DROP POLICY IF EXISTS "Anyone can read game state" ON game_state;
 CREATE POLICY "Anyone can read game state" ON game_state FOR SELECT USING (true);
 
